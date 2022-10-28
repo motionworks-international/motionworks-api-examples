@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<head>
+	<!-- load important scripts first-->
+	<!-- mapbox-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.2/mapbox-gl.js" integrity="sha512-Dx9gzcgymjHriPzjm7Ay1zVYnAYZrvyFPn/Vo7rOmVKZZqOTPkyBUGxry10K/PAikvTzSiDZMB/960XdJWqAjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+	<!-- h3-js (the hexagon cells)-->
+	<script src="https://unpkg.com/h3-js@3.7.2/dist/h3-js.umd.js"></script>
+
+	<!-- turf.js (used for a bounding box calculation) -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js" integrity="sha512-Q7HOppxoH0L2M7hreVoFCtUZimR2YaY0fBewIYzkCgmNtgOOZ5IgMNYxHgfps0qrO1ef5m7L1FeHrhXlq1I9HA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	
+	<!-- deck.gl + required extensions for what we're doing -->
+	<script src="https://cdn.jsdelivr.net/npm/deck.gl@8.7.2/dist.min.js" integrity="sha256-oKaimilDuZwFTOy7VLr1wxAxdSu7oh3HWmZPTGFIB08=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@deck.gl/extensions@8.7.2/dist.min.js" integrity="sha256-jj32L/0oNwpIDpt0O67tAByvPocktH7jAWTSJypBlK4=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@deck.gl/layers@8.7.2/dist.min.js" integrity="sha256-nFIswNFB88BUtYEOSA0LRqqF7IyXRbyna38INPbFEpI=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@deck.gl/mesh-layers@8.7.2/dist.min.js" integrity="sha256-lmwI4+i+XXfYYOfG55JxldvN94Brxps4NHuwCVx0hUo=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@deck.gl/geo-layers@8.7.2/dist.min.js" integrity="sha256-bNB+hVjc7fZJTINAgGGIJGbMwYvMdkZPNyx4A2mXI5k=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@deck.gl/mapbox@8.7.2/dist.min.js" integrity="sha256-t403vzAX883725PDEaAi9E9bij9Tg7HRGb7jkzdGyoM=" crossorigin="anonymous"></script>
+
+	<!-- load the css for the packages we loaded-->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.2/mapbox-gl.min.css" integrity="sha512-f9ygkycTxYz4ZGWOrdRHvW8RvVtF0BzP0nl2a2eF2LE4N5FzXqtHnxip+Ses43V9l9QwP0iGs7NvCp7yrdBXpg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link rel="stylesheet" href="./anytime-population.css" />
+</head>
+<body>
+	<div class="container">
+		<!-- the mapbox map goes here -->
+		<div id="map"></div>
+		<!-- the menu goes here-->
+		<div id="menu" class="card">
+			<div class="card-collapse-container">
+				<div class="card-collapse closed hidden">
+					&#8250;
+				</div>
+				<div class="card-collapse open">
+					&#8964;
+				</div>
+			</div>
+			<div class="select-container" style="margin-top: 2rem;">
+				<label class="label">Selected Demographic</label>
+				<select id="demographic-select" class="select" placeholder="Select a demographic">
+				</select>
+			</div>
+			<div class="select-container">
+				<label class="label">Weekday Options</label>
+				<select id="weekday-select" class="select" placeholder="Select a weekday option">
+					<option value="wd">Weekdays</option>
+					<option value="we">Weekends</option>
+					<option value="wk" selected>Full Weeks</option>
+				</select>
+			</div>
+			<div class="select-container">
+				<label class="label">Time Period</label>
+				<select id="period-select" class="select" placeholder="Select a time period">
+					<option value="daily" selected>Daily</option>
+					<option value="hourly">Hourly</option>
+				</select>
+			</div>
+			<div class="select-container hidden hour-select-container">
+				<!-- to keep things simpler I just made this a select -->
+				<!-- but this is best suited as a slider-->
+				<label class="label">Selected Hour</label>
+				<div style="display: flex">
+					<select id="hour-select" class="select" placeholder="12AM">
+						<option value="0" selected>12AM</option>
+						<option value="1">1AM</option>
+						<option value="2">2AM</option>
+						<option value="3">3AM</option>
+						<option value="4">4AM</option>
+						<option value="5">5AM</option>
+						<option value="6">6AM</option>
+						<option value="7">7AM</option>
+						<option value="8">8AM</option>
+						<option value="9">9AM</option>
+						<option value="10">10AM</option>
+						<option value="11">11AM</option>
+						<option value="12">12PM</option>
+						<option value="13">1PM</option>
+						<option value="14">2PM</option>
+						<option value="15">3PM</option>
+						<option value="16">4PM</option>
+						<option value="17">5PM</option>
+						<option value="18">6PM</option>
+						<option value="19">7PM</option>
+						<option value="20">8PM</option>
+						<option value="21">9PM</option>
+						<option value="22">10PM</option>
+						<option value="23">11PM</option>
+					</select>
+					<div class="animation-container">
+						<div class="hour-animation play">
+							&#9654;
+						</div>
+						<div class="hour-animation pause hidden">
+							| |
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- now load the custom javascript -->
+	<script src = './anytime-population.js'></script>
+</body>
